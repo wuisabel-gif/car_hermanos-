@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Car Hermonos · LA First-Car Finder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Saira:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#070b13; --surface:#0d1726; --surface-2:#101e31; --surface-3:#13233a;
+    --ice:#5ce3ff; --ice-deep:#1f6f88; --amber:#ffae4d; --violet:#a99bff; --mint:#67ffcb; --rose:#ff6f88;
+    --ink:#eaf3ff; --text:#c4d4ea; --muted:#93a7c6; --muted-2:#7f93b5;
+    --line:rgba(92,227,255,.20); --line-soft:rgba(140,170,215,.15); --hair:rgba(255,255,255,.06);
+    --top-hi:inset 0 1px 0 rgba(180,220,255,.10);
+    --z-sticky:10;
+    --e:cubic-bezier(.22,1,.36,1);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;color:var(--text);font-family:"Saira",system-ui,sans-serif;font-weight:400;line-height:1.55;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;background:var(--void);position:relative;overflow-x:hidden;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
+    background:
+      radial-gradient(85% 55% at 50% -10%, rgba(92,227,255,.09), transparent 60%),
+      radial-gradient(60% 45% at 94% 6%, rgba(255,174,77,.06), transparent 60%),
+      radial-gradient(70% 55% at 4% 28%, rgba(169,155,255,.05), transparent 60%);
+  }
+  body::after{
+    content:"";position:fixed;left:50%;bottom:-34vh;width:200vw;height:74vh;z-index:-1;
+    transform:translateX(-50%) perspective(64vh) rotateX(64deg);
+    background-image:linear-gradient(rgba(92,227,255,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(92,227,255,.10) 1px,transparent 1px);
+    background-size:52px 52px;
+    -webkit-mask-image:linear-gradient(180deg,transparent,#000 45%,transparent);mask-image:linear-gradient(180deg,transparent,#000 45%,transparent);
+    opacity:.32;pointer-events:none;
+  }
+  .wrap{max-width:1160px;margin:0 auto;padding:0 22px}
+
+  /* HERO */
+  .hero{padding:40px 0 16px}
+  .cluster{position:relative;border-radius:16px;padding:30px 32px;overflow:hidden;background:linear-gradient(180deg,#13243c,#0b1525);border:1px solid var(--line);box-shadow:var(--top-hi)}
+  .cluster::before{content:"";position:absolute;top:0;left:7%;right:7%;height:1px;background:linear-gradient(90deg,transparent,var(--ice),transparent);box-shadow:0 0 16px rgba(92,227,255,.5)}
+  .hud-row{display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+  .status{display:inline-flex;align-items:center;gap:8px;font-family:"Chakra Petch",sans-serif;font-weight:600;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--mint);border:1px solid rgba(103,255,203,.32);border-radius:999px;padding:5px 12px;background:rgba(103,255,203,.07)}
+  .status .led{width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 10px var(--mint);animation:blink 1.9s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+  .region{font-family:"Chakra Petch",sans-serif;font-size:11px;letter-spacing:.18em;color:var(--muted-2);margin-left:auto}
+  .cluster h1{font-family:"Chakra Petch",sans-serif;font-weight:700;text-wrap:balance;font-size:clamp(31px,5.6vw,52px);line-height:1.0;letter-spacing:-.01em;margin:0;color:var(--ink)}
+  .cluster h1 .accent{color:var(--ice)}
+  .cluster .lede{margin:15px 0 0;max-width:60ch;color:var(--text);font-size:clamp(14px,1.8vw,17px);text-wrap:pretty}
+  .cluster-arc{position:absolute;right:-26px;top:-26px;width:210px;height:210px;opacity:.42;pointer-events:none}
+
+  /* DASHBOARD */
+  .dash{display:grid;grid-template-columns:312px 1fr;gap:24px;margin-top:26px;align-items:start}
+  @media(max-width:880px){.dash{grid-template-columns:1fr}}
+  .console{position:sticky;top:16px;z-index:var(--z-sticky)}
+  .panel{background:var(--surface);border:1px solid var(--line-soft);border-radius:16px;box-shadow:var(--top-hi);overflow:hidden}
+  .panel-head{display:flex;align-items:center;gap:10px;padding:15px 18px;border-bottom:1px solid var(--hair);font-family:"Chakra Petch",sans-serif;font-weight:600;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+  .panel-head .pulse{width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 9px var(--amber)}
+  .panel-pad{padding:18px}
+
+  .speedo{border-radius:13px;padding:16px 16px 14px;text-align:center;position:relative;background:radial-gradient(120% 130% at 50% -10%,rgba(92,227,255,.12),var(--void) 72%);border:1px solid var(--line);box-shadow:var(--top-hi)}
+  .speedo-label{font-family:"Chakra Petch",sans-serif;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--ice);opacity:.85;display:flex;justify-content:space-between}
+  .speedo-num{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:clamp(34px,8.5vw,46px);line-height:1.06;color:var(--ink);letter-spacing:.01em}
+  .speedo-num .unit{color:var(--ice);font-size:.42em;vertical-align:.55em;margin-right:.08em}
+  .speedo-foot{font-size:12px;color:var(--muted);margin-top:5px}
+  .tickbar{display:flex;gap:3px;justify-content:center;margin-top:11px}
+  .tickbar i{width:4px;height:11px;border-radius:2px;background:rgba(140,170,215,.20)}
+  .tickbar i.on{background:var(--ice);box-shadow:0 0 7px var(--ice)}
+
+  .fld{display:block;margin-top:18px}
+  .fld-label{font-family:"Chakra Petch",sans-serif;font-weight:600;font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;justify-content:space-between}
+  .fld-val{color:var(--ice)}
+
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;border-radius:6px;outline:none;cursor:pointer;background:linear-gradient(90deg,var(--ice),var(--violet))}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;cursor:pointer;background:var(--ink);border:3px solid var(--void);box-shadow:0 0 0 2px var(--ice)}
+  input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--ink);border:3px solid var(--void);box-shadow:0 0 0 2px var(--ice);cursor:pointer}
+  input[type=range]:focus-visible::-webkit-slider-thumb{outline:2px solid var(--amber);outline-offset:3px}
+
+  .seg{display:grid;gap:7px;margin-top:8px}
+  .seg.two{grid-template-columns:1fr 1fr}
+  .seg.three{grid-template-columns:1fr 1fr 1fr}
+  .seg.four{grid-template-columns:repeat(4,1fr)}
+  .seg button{font-family:"Saira",sans-serif;font-weight:500;font-size:12.5px;color:var(--text);cursor:pointer;background:var(--surface-3);border:1px solid var(--line-soft);border-radius:10px;padding:10px 4px;transition:.18s var(--e)}
+  .seg button:hover{border-color:var(--ice-deep);color:var(--ink)}
+  .seg button[aria-pressed=true]{background:rgba(92,227,255,.16);border-color:var(--ice);color:var(--ink)}
+  .seg button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .chip{font-family:"Saira",sans-serif;font-size:12.5px;font-weight:500;color:var(--text);cursor:pointer;background:var(--surface-3);border:1px solid var(--line-soft);border-radius:999px;padding:8px 13px;display:inline-flex;align-items:center;gap:8px;transition:.18s var(--e)}
+  .chip .led{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--muted-2);transition:.18s var(--e);flex:none}
+  .chip:hover{border-color:var(--ice-deep)}
+  .chip[aria-pressed=true]{background:rgba(92,227,255,.12);border-color:var(--ice);color:var(--ink)}
+  .chip[aria-pressed=true] .led{background:var(--ice);border-color:var(--ice);box-shadow:0 0 9px var(--ice)}
+  .chip:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+  .grid-mini{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+  .mini label{display:block;font-family:"Chakra Petch",sans-serif;font-weight:600;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+  .mini input{width:100%;background:var(--void);border:1px solid var(--line-soft);border-radius:9px;color:var(--ice);font-family:"Chakra Petch",sans-serif;font-weight:600;font-size:14px;padding:8px 10px}
+  .mini input:focus{outline:none;border-color:var(--ice)}
+
+  /* RESULTS */
+  .telemetry{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+  .telemetry .count{font-family:"Chakra Petch",sans-serif;font-weight:600;font-size:17px;color:var(--ink)}
+  .telemetry .count b{color:var(--ice);font-size:1.3em}
+  .telemetry .hint{font-size:12.5px;color:var(--muted)}
+
+  .gauge{position:relative;flex:none}
+  .gauge svg{width:100%;height:100%;display:block;overflow:visible}
+  .gauge .val-arc{transition:stroke-dashoffset 1.05s var(--e)}
+  .gauge .needle{transition:transform 1.05s var(--e);transform-box:view-box;transform-origin:60px 60px}
+  .gauge-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+  .gauge-num .n{font-family:"Chakra Petch",sans-serif;font-weight:700;line-height:1}
+  .gauge-num .l{font-family:"Chakra Petch",sans-serif;letter-spacing:.16em;color:var(--muted);margin-top:3px}
+
+  /* COMPARE PANEL */
+  #compare:empty{display:none}
+  .cmp-panel{border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#14273f,#0c1828);box-shadow:var(--top-hi);margin-bottom:18px;overflow:hidden;animation:rise .42s var(--e) both}
+  .cmp-bar{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--hair)}
+  .cmp-bar .t{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);display:flex;align-items:center;gap:8px}
+  .cmp-bar .t .vs{color:var(--ice)}
+  .cmp-clear{font-family:"Saira",sans-serif;font-size:12px;font-weight:500;color:var(--text);background:var(--surface-3);border:1px solid var(--line-soft);border-radius:8px;padding:6px 12px;cursor:pointer;transition:.18s var(--e)}
+  .cmp-clear:hover{border-color:var(--rose);color:var(--rose)}
+  .cmp-clear:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  .cmp-grid{display:grid;grid-template-columns:1.05fr 1fr 1fr}
+  .cmp-h{padding:16px 12px;display:flex;flex-direction:column;align-items:center;gap:9px;text-align:center;border-left:1px solid var(--hair)}
+  .cmp-h:first-child{border-left:none;justify-content:flex-end}
+  .cmp-h .gauge{width:76px;height:76px}
+  .cmp-hname{font-family:"Chakra Petch",sans-serif;font-weight:700;color:var(--ink);font-size:15px;line-height:1.1;text-wrap:balance}
+  .cmp-cell{padding:11px 14px;border-top:1px solid var(--hair);font-size:13px;display:flex;align-items:center;min-width:0}
+  .cmp-cell.label{color:var(--muted);font-family:"Chakra Petch",sans-serif;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase}
+  .cmp-cell.val{font-family:"Chakra Petch",sans-serif;font-weight:600;color:var(--text);justify-content:flex-end;text-align:right;border-left:1px solid var(--hair)}
+  .cmp-cell.win{color:var(--mint)}
+  .cmp-cell.win::after{content:"▲";font-size:8px;margin-left:6px;opacity:.8}
+  .cmp-prompt{padding:14px 16px;font-size:13px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .cmp-prompt b{color:var(--ink);font-family:"Chakra Petch",sans-serif;font-weight:600}
+  @media(max-width:520px){
+    .cmp-grid{grid-template-columns:1fr 1fr}
+    .cmp-cell.label{grid-column:1/-1;border-top:1px solid var(--line-soft);justify-content:center;padding-bottom:2px}
+    .cmp-cell.val{border-left:none;justify-content:center;text-align:center}
+    .cmp-h:first-child{display:none}
+  }
+
+  /* featured + cards */
+  #featured:empty{display:none}
+  .feat{position:relative;border-radius:16px;margin-bottom:18px;overflow:hidden;background:linear-gradient(180deg,#14273f,#0c1828);border:1px solid var(--line);box-shadow:var(--top-hi);animation:rise .55s var(--e) both}
+  .feat::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--ice),transparent);opacity:.7}
+  .feat-tag{position:absolute;top:14px;right:16px;font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--void);background:var(--ice);border-radius:6px;padding:4px 9px}
+  .feat-grid{display:grid;grid-template-columns:236px 1fr;gap:6px 26px;padding:22px}
+  @media(max-width:620px){.feat-grid{grid-template-columns:1fr;justify-items:center;text-align:center}}
+  .feat-id{display:flex;flex-direction:column;align-items:center;gap:14px;align-self:start}
+  .feat .gauge{width:160px;height:160px}
+  .feat .gauge-num .n{font-size:40px}
+  .feat .gauge-num .l{font-size:9px}
+  .feat-name .car-name{font-size:23px}
+  .feat-detail{display:flex;flex-direction:column;gap:14px;min-width:0;width:100%}
+
+  .car-name{font-family:"Chakra Petch",sans-serif;font-weight:700;color:var(--ink);line-height:1.08;letter-spacing:-.01em;text-wrap:balance}
+  .car-blurb{font-size:12.5px;color:var(--muted);margin-top:4px;text-wrap:pretty}
+  .bro{margin-top:10px;font-size:13.5px;color:var(--text);font-style:italic;line-height:1.45;text-wrap:pretty}
+  .bro .who{display:block;font-style:normal;font-family:"Chakra Petch",sans-serif;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ice);margin-top:6px}
+  .badges{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;justify-content:inherit}
+  .bt{font-family:"Chakra Petch",sans-serif;font-weight:600;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;padding:4px 8px;border-radius:6px;border:1px solid var(--line-soft);color:var(--text)}
+  .bt.gas{border-color:rgba(255,174,77,.42);color:var(--amber);background:rgba(255,174,77,.08)}
+  .bt.hyb{border-color:rgba(92,227,255,.42);color:var(--ice);background:rgba(92,227,255,.08)}
+  .bt.ev{border-color:rgba(169,155,255,.46);color:var(--violet);background:rgba(169,155,255,.10)}
+  .bt.saf{border-color:rgba(103,255,203,.42);color:var(--mint);background:rgba(103,255,203,.08)}
+  .bt.awd{border-color:rgba(180,200,230,.4);color:var(--ink);background:rgba(180,200,230,.07)}
+
+  .cmp-btn{margin-top:10px;font-family:"Saira",sans-serif;font-size:11.5px;font-weight:600;color:var(--muted);background:transparent;border:1px solid var(--line-soft);border-radius:8px;padding:6px 11px;cursor:pointer;transition:.16s var(--e);display:inline-flex;align-items:center;gap:6px}
+  .cmp-btn:hover{border-color:var(--ice);color:var(--ice)}
+  .cmp-btn[aria-pressed=true]{background:rgba(92,227,255,.14);border-color:var(--ice);color:var(--ink)}
+  .cmp-btn:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+  .readouts{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  .readouts.r4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:420px){.readouts.r4{grid-template-columns:repeat(2,1fr)}}
+  .ro{background:var(--void);border:1px solid var(--line-soft);border-radius:10px;padding:9px 8px;text-align:center}
+  .ro .k{font-family:"Chakra Petch",sans-serif;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .ro .v{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:15px;color:var(--ink);margin-top:3px}
+  .ro .v.small{font-size:12.5px}
+
+  .la-notes{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;text-align:left;width:100%}
+  .la-notes li{display:flex;gap:9px;font-size:12.5px;color:var(--text);line-height:1.4;text-wrap:pretty}
+  .la-notes .ico{flex:none;width:16px;height:16px;border-radius:4px;display:grid;place-items:center;font-size:10px;font-weight:700;margin-top:1px}
+  .la-notes .ok .ico{background:rgba(103,255,203,.15);color:var(--mint)}
+  .la-notes .warn .ico{background:rgba(255,111,136,.15);color:var(--rose)}
+
+  .cost-toggle{width:100%;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:var(--surface-3);border:1px solid var(--line);border-radius:11px;padding:11px 14px;color:var(--ink);font-family:"Chakra Petch",sans-serif;font-weight:600;font-size:12.5px;letter-spacing:.03em;transition:border-color .18s var(--e),background .18s var(--e)}
+  .cost-toggle:hover{background:rgba(92,227,255,.10)}
+  .cost-toggle:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  .cost-toggle .mo{color:var(--ice)}
+  .cost-toggle .chev{transition:transform .28s var(--e)}
+  .cost-toggle[aria-expanded=true] .chev{transform:rotate(180deg)}
+  .cost-panel{display:none;margin-top:10px;background:var(--void);border:1px solid var(--line-soft);border-radius:11px;padding:13px;text-align:left}
+  .cost-panel.open{display:block;animation:drop .22s var(--e)}
+  .cl{display:flex;justify-content:space-between;gap:14px;font-size:12.5px;padding:6px 0;border-bottom:1px dashed var(--hair);color:var(--text)}
+  .cl:last-of-type{border-bottom:none}
+  .cl .amt{font-family:"Chakra Petch",sans-serif;font-weight:600;color:var(--ink);white-space:nowrap}
+  .cl-total{display:flex;justify-content:space-between;gap:14px;margin-top:9px;padding-top:9px;border-top:1px solid var(--line);font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:14px;color:var(--ink)}
+  .cl-total .amt{color:var(--amber)}
+  .cost-foot{font-size:11px;color:var(--muted);margin-top:9px;line-height:1.45;text-wrap:pretty}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(284px,1fr));gap:18px}
+  .car{position:relative;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line-soft);box-shadow:var(--top-hi);transition:transform .22s var(--e),border-color .22s var(--e);animation:rise .5s var(--e) both}
+  .car:hover{transform:translateY(-3px);border-color:var(--line)}
+  .car.selected{border-color:var(--ice)}
+  .car::before{content:"";position:absolute;top:0;left:14%;right:14%;height:1px;background:linear-gradient(90deg,transparent,var(--ice),transparent);opacity:.5}
+  .car-top{display:flex;gap:14px;padding:16px 16px 8px;align-items:center}
+  .car .gauge{width:100px;height:100px}
+  .car .gauge-num .n{font-size:25px}
+  .car .gauge-num .l{font-size:8px}
+  .head-info{min-width:0}
+  .car-body{padding:8px 16px 16px;display:flex;flex-direction:column;gap:13px;flex:1}
+  .car-body .cost-toggle{margin-top:auto}
+
+  .empty{text-align:center;padding:54px 22px;color:var(--muted);border:1px dashed var(--line-soft);border-radius:14px;background:var(--surface)}
+  .empty b{color:var(--ink);font-family:"Chakra Petch",sans-serif;display:block;margin-bottom:6px;font-size:17px}
+
+  /* footer */
+  .foot{margin:36px 0 14px}
+  .disclaimer{max-width:78ch;background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:16px 18px;font-size:12.5px;color:var(--text);line-height:1.6;text-wrap:pretty;display:flex;gap:13px;align-items:flex-start}
+  .disclaimer .mark{flex:none;width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:rgba(255,174,77,.14);color:var(--amber);font-weight:700;font-family:"Chakra Petch",sans-serif}
+  .disclaimer strong{color:var(--ink)}
+  .credit{margin:0 0 54px;display:flex;justify-content:center}
+  .credit a{font-family:"Chakra Petch",sans-serif;font-size:12px;letter-spacing:.08em;color:var(--muted-2);text-decoration:none;display:inline-flex;align-items:center;gap:9px;padding:9px 16px;border:1px solid var(--line-soft);border-radius:999px;transition:.18s var(--e)}
+  .credit a:hover{color:var(--ice);border-color:var(--ice)}
+  .credit svg{width:15px;height:15px;fill:currentColor}
+
+  @keyframes rise{from{transform:translateY(12px)}to{transform:none}}
+  @keyframes drop{from{transform:translateY(-5px)}to{transform:none}}
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+    body::after{opacity:.22}
+    .gauge .val-arc{stroke-dashoffset:0!important}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="cluster">
+      <svg class="cluster-arc" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+        <circle cx="60" cy="60" r="50" stroke="rgba(92,227,255,.22)" stroke-width="2" stroke-dasharray="75 100" pathLength="100" transform="rotate(135 60 60)"/>
+        <circle cx="60" cy="60" r="50" stroke="#5ce3ff" stroke-width="3" stroke-linecap="round" stroke-dasharray="56 100" pathLength="100" transform="rotate(135 60 60)" style="filter:drop-shadow(0 0 5px #5ce3ff)"/>
+      </svg>
+      <div class="hud-row">
+        <span class="status"><span class="led"></span>Tu hermano's got you</span>
+        <span class="region">Region · Los Angeles</span>
+      </div>
+      <h1>Car <span class="accent">Hermonos</span></h1>
+      <p class="lede">Think of it as a car-obsessed older brother in your corner. Tell me your budget and what matters, and I'll point you to the right first car for LA — and warn you about the gas, smog, insurance, and parking nobody else mentions.</p>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="dash">
+
+    <aside class="panel console">
+      <div class="panel-head"><span class="pulse"></span>Driver console</div>
+      <div class="panel-pad">
+
+        <div class="speedo">
+          <div class="speedo-label"><span>Budget</span><span>Max</span></div>
+          <div class="speedo-num" id="budgetDisplay"><span class="unit">$</span>15,000</div>
+          <div class="speedo-foot" id="budgetTier">used &amp; reliable territory</div>
+          <div class="tickbar" id="tickbar"></div>
+        </div>
+        <label class="fld" style="margin-top:14px">
+          <span class="fld-label">Spend ceiling <span class="fld-val" id="budgetMini">$15,000</span></span>
+          <input type="range" id="budget" min="4000" max="80000" step="500" value="15000" aria-label="Maximum budget">
+        </label>
+
+        <div class="fld">
+          <span class="fld-label">Drive profile <span class="fld-val" id="milesVal">~12k mi/yr</span></span>
+          <div class="seg three" id="driveSeg" role="group" aria-label="Driving style">
+            <button data-miles="7000" aria-pressed="false">City</button>
+            <button data-miles="12000" aria-pressed="true">Mixed</button>
+            <button data-miles="18000" aria-pressed="false">Commute</button>
+          </div>
+        </div>
+
+        <label class="fld">
+          <span class="fld-label">CA fuel price <span class="fld-val" id="gasVal">$4.90/gal</span></span>
+          <input type="range" id="gas" min="3.5" max="6.5" step="0.1" value="4.9" aria-label="California gas price per gallon">
+        </label>
+
+        <div class="fld">
+          <span class="fld-label">Powertrain</span>
+          <div class="seg four" id="fuelSeg" role="group" aria-label="Powertrain filter">
+            <button data-fuel="all" aria-pressed="true">All</button>
+            <button data-fuel="ev" aria-pressed="false">EV</button>
+            <button data-fuel="hybrid" aria-pressed="false">Hybrid</button>
+            <button data-fuel="gas" aria-pressed="false">Gas</button>
+          </div>
+          <div class="chips">
+            <button class="chip" id="awdToggle" aria-pressed="false"><span class="led"></span>AWD only</button>
+          </div>
+        </div>
+
+        <div class="fld">
+          <span class="fld-label">Priorities</span>
+          <div class="chips" id="priorityChips" role="group" aria-label="Priorities">
+            <button class="chip" data-pri="fuel" aria-pressed="true"><span class="led"></span>Cheap to run</button>
+            <button class="chip" data-pri="reliability" aria-pressed="true"><span class="led"></span>Reliable</button>
+            <button class="chip" data-pri="safety" aria-pressed="false"><span class="led"></span>Top safety</button>
+            <button class="chip" data-pri="parking" aria-pressed="false"><span class="led"></span>Easy parking</button>
+            <button class="chip" data-pri="space" aria-pressed="false"><span class="led"></span>Room / cargo</button>
+            <button class="chip" data-pri="upfront" aria-pressed="false"><span class="led"></span>Lowest price</button>
+          </div>
+        </div>
+
+        <div class="fld">
+          <span class="fld-label">Payment</span>
+          <div class="seg two" id="paySeg" role="group" aria-label="Payment method">
+            <button data-pay="cash" aria-pressed="false">Cash</button>
+            <button data-pay="finance" aria-pressed="true">Finance</button>
+          </div>
+        </div>
+
+        <div id="financeFields" class="grid-mini">
+          <div class="mini"><label>Down %</label><input type="number" id="down" value="10" min="0" max="100"></div>
+          <div class="mini"><label>APR %</label><input type="number" id="apr" value="9" min="0" max="30" step="0.5"></div>
+          <div class="mini"><label>Term mo</label><input type="number" id="term" value="60" min="12" max="84" step="12"></div>
+          <div class="mini"><label>Driver age</label><input type="number" id="age" value="22" min="16" max="80"></div>
+        </div>
+
+      </div>
+    </aside>
+
+    <section id="results">
+      <div id="compare"></div>
+      <div class="telemetry">
+        <div class="count"><b id="count">0</b> cars in range</div>
+        <div class="hint">Ranked by LA fit · tap a card for cost · "Compare" pins up to 2</div>
+      </div>
+      <div id="featured"></div>
+      <div class="grid" id="grid"></div>
+    </section>
+
+  </div>
+
+  <div class="foot">
+    <div class="disclaimer">
+      <span class="mark">!</span>
+      <span><strong>Calibration notice.</strong> Price bands reflect typical mid-2026 US used-market asking ranges (drawn from Edmunds, CarGurus, Cox/Manheim and KBB) and still vary with mileage, condition, trim and the local LA market — they're a guide, not a quote. California registration uses a Vehicle License Fee (~0.65% of value) plus fees that change; insurance for a young LA driver varies hugely by record and ZIP, so pull real quotes. Smog: gas/hybrid cars generally need a check every 2 years, but vehicles <strong>8 model years old or newer are exempt</strong>; EVs are exempt entirely. Note federal EV tax credits ended in late 2025, and the solo-driver carpool decal depends on state reauthorization — confirm current status. Always verify with the CA DMV and a licensed insurer.</span>
+    </div>
+  </div>
+  <div class="credit">
+    <a href="https://github.com/wuisabel-gif" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+      © wuisabel-gif — All rights reserved
+    </a>
+  </div>
+</main>
+
+<script>
+(function(){
+  const CARS = [
+    {name:"Honda Civic", type:"Sedan", lo:9000, hi:22000, mpg:33, miPerKwh:null, rel:5, space:3, park:4, fuel:"gas", awd:false, yrsOld:9,
+      blurb:"The default smart first car.", notes:[["ok","Bulletproof reliability, cheap parts everywhere"],["ok","Compact-ish — manageable on LA streets"]]},
+    {name:"Toyota Corolla", type:"Sedan", lo:9000, hi:21000, mpg:34, miPerKwh:null, rel:5, space:3, park:4, fuel:"gas", awd:false, yrsOld:9,
+      blurb:"Boring in the best way.", notes:[["ok","Famously hard to kill, low repair costs"],["ok","Easy to insure as a first car"]]},
+    {name:"Toyota Prius", type:"Hybrid", lo:12000, hi:24000, mpg:52, miPerKwh:null, rel:5, space:3, park:4, fuel:"hybrid", awd:false, yrsOld:9,
+      blurb:"LA's unofficial hybrid mascot.", notes:[["ok","52 mpg crushes CA fuel costs on long drives"],["ok","Roomy hatch, still parkable"]]},
+    {name:"Honda Fit", type:"Hatchback", lo:8000, hi:16000, mpg:35, miPerKwh:null, rel:5, space:4, park:5, fuel:"gas", awd:false, yrsOld:9,
+      blurb:"Tiny outside, huge inside.", notes:[["ok","Slots into spots others can't"],["ok","Magic seats swallow real cargo"]]},
+    {name:"Mazda3", type:"Sedan", lo:11000, hi:22000, mpg:33, miPerKwh:null, rel:4, space:3, park:4, fuel:"gas", awd:false, yrsOld:8,
+      blurb:"The fun one that's still sensible.", notes:[["ok","Nicer to drive than its rivals"],["ok","Holds value in SoCal"]]},
+    {name:"Hyundai Elantra", type:"Sedan", lo:9000, hi:18000, mpg:35, miPerKwh:null, rel:4, space:3, park:4, fuel:"gas", awd:false, yrsOld:8,
+      blurb:"Lots of car for the money.", notes:[["ok","Long warranty if you find a newer one"],["ok","Cheap to run and insure"]]},
+    {name:"Subaru Impreza", type:"Hatchback", lo:11000, hi:20000, mpg:31, miPerKwh:null, rel:4, space:3, park:4, fuel:"gas", awd:true, yrsOld:8,
+      blurb:"AWD for canyon + ski runs.", notes:[["ok","Standard AWD — grippy for Angeles Crest"],["warn","A touch thirstier than FWD rivals"]]},
+    {name:"Kia Soul", type:"Wagon", lo:9000, hi:18000, mpg:30, miPerKwh:null, rel:4, space:4, park:4, fuel:"gas", awd:false, yrsOld:8,
+      blurb:"Boxy, cheap, roomy.", notes:[["ok","Tall roof, small footprint"],["ok","Friendly first-car price"]]},
+    {name:"Toyota RAV4", type:"SUV", lo:16000, hi:30000, mpg:28, miPerKwh:null, rel:5, space:5, park:2, fuel:"gas", awd:true, yrsOld:8,
+      blurb:"If you actually need space.", notes:[["ok","Hauls gear, friends, IKEA runs; AWD available"],["warn","Harder to street-park, pricier to insure"]]},
+    {name:"Nissan Leaf", type:"EV", lo:7000, hi:15000, mpg:null, miPerKwh:3.5, rel:4, space:3, park:4, fuel:"ev", awd:false, yrsOld:6, range:150,
+      blurb:"Cheapest way into an EV.", notes:[["ok","No gas, no smog, tiny running cost"],["warn","~150 mi range — city-great, road-trip-tight"]]},
+    {name:"Chevy Bolt EV", type:"EV", lo:11000, hi:21000, mpg:null, miPerKwh:3.6, rel:4, space:3, park:5, fuel:"ev", awd:false, yrsOld:5, range:240,
+      blurb:"The LA commuter sweet spot.", notes:[["ok","~240 mi range, pennies-per-mile"],["ok","Compact, smog-exempt; check HOV decal status"]]},
+    {name:"Tesla Model 3", type:"EV", lo:18000, hi:33000, mpg:null, miPerKwh:4.0, rel:4, space:3, park:3, fuel:"ev", awd:true, yrsOld:5, range:270,
+      blurb:"The aspirational used EV.", notes:[["ok","Off-lease supply has dropped used prices"],["warn","Insurance + repairs run higher"]]},
+    {name:"Toyota Corolla Hybrid", type:"Hybrid", lo:19000, hi:27000, mpg:50, miPerKwh:null, rel:5, space:3, park:4, fuel:"hybrid", awd:false, yrsOld:5,
+      blurb:"New-ish, sips fuel, lasts forever.", notes:[["ok","~50 mpg with Corolla durability"],["ok","Likely smog-exempt for years"]]},
+    {name:"Mazda CX-30", type:"SUV", lo:17000, hi:28000, mpg:29, miPerKwh:null, rel:4, space:4, park:3, fuel:"gas", awd:true, yrsOld:5,
+      blurb:"Small SUV that feels premium.", notes:[["ok","Standard AWD, higher seating, city-sized"],["warn","Cargo smaller than it looks"]]},
+    {name:"Hyundai Kona", type:"SUV", lo:14000, hi:24000, mpg:32, miPerKwh:null, rel:4, space:4, park:4, fuel:"gas", awd:true, yrsOld:6,
+      blurb:"Compact crossover, efficient.", notes:[["ok","SUV stance, no SUV gas bill; AWD available"],["ok","Easy to maneuver and park"]]},
+    {name:"Honda CR-V", type:"SUV", lo:15000, hi:30000, mpg:30, miPerKwh:null, rel:5, space:5, park:2, fuel:"gas", awd:true, yrsOld:8,
+      blurb:"The do-everything hand-me-down.", notes:[["ok","Space + reliability, holds value; AWD available"],["warn","Bigger footprint, tougher parking"]]},
+    {name:"Subaru Outback", type:"Wagon", lo:17000, hi:33000, mpg:29, miPerKwh:null, rel:4, space:5, park:3, fuel:"gas", awd:true, yrsOld:6, safe:5,
+      blurb:"AWD wagon that does everything.", notes:[["ok","Standard AWD + cavernous cargo for trips"],["ok","Stellar crash-test record"]]},
+    {name:"Lexus UX", type:"SUV", lo:24000, hi:38000, mpg:42, miPerKwh:null, rel:5, space:3, park:4, fuel:"hybrid", awd:true, yrsOld:5, safe:5,
+      blurb:"Luxury hybrid that sips fuel.", notes:[["ok","Lexus reliability, ~42 mpg, AWD hybrid"],["ok","Compact, easy to park, smog-friendly"]]},
+    {name:"Volvo XC40", type:"SUV", lo:19000, hi:40000, mpg:25, miPerKwh:null, rel:4, space:4, park:3, fuel:"gas", awd:true, yrsOld:5, safe:5,
+      blurb:"Safety-first Swedish SUV.", notes:[["ok","Among the safest cars on the road; AWD B5"],["warn","Premium parts = pricier upkeep + insurance"]]},
+    {name:"Volvo C40 Recharge", type:"EV", lo:26000, hi:46000, mpg:null, miPerKwh:3.2, rel:4, space:3, park:3, fuel:"ev", awd:true, yrsOld:4, safe:5, range:225,
+      blurb:"The electric Volvo flex.", notes:[["ok","~225 mi range, no gas, no smog, AWD twin-motor"],["warn","Luxury-EV insurance + repairs run high"]]},
+    {name:"Tesla Model Y", type:"EV", lo:26000, hi:45000, mpg:null, miPerKwh:3.8, rel:4, space:5, park:3, fuel:"ev", awd:true, yrsOld:4, safe:5, range:300,
+      blurb:"The do-everything electric SUV.", notes:[["ok","~300 mi range, huge cargo, AWD Long Range"],["ok","Superchargers everywhere in SoCal"]]},
+    {name:"Lexus IS", type:"Sedan", lo:22000, hi:40000, mpg:25, miPerKwh:null, rel:5, space:3, park:4, fuel:"gas", awd:true, yrsOld:6, safe:5,
+      blurb:"Plush, durable luxury sedan.", notes:[["ok","Bank-vault build, ages gracefully; AWD available"],["warn","Thirstier; prefers premium fuel"]]},
+  ];
+
+  const SAFE={"Honda Civic":5,"Toyota Corolla":5,"Toyota Prius":4,"Honda Fit":4,"Mazda3":5,"Hyundai Elantra":4,"Subaru Impreza":5,"Kia Soul":4,"Toyota RAV4":5,"Nissan Leaf":4,"Chevy Bolt EV":4,"Tesla Model 3":5,"Toyota Corolla Hybrid":5,"Mazda CX-30":5,"Hyundai Kona":4,"Honda CR-V":5};
+  CARS.forEach(c=>{ if(c.safe==null) c.safe=SAFE[c.name]??4; });
+  const BRO={
+    "Honda Civic":"Get this one — it'll never leave you stranded.",
+    "Toyota Corolla":"Want zero drama? It's this. Easy.",
+    "Toyota Prius":"Gas prices stop scaring you in this.",
+    "Honda Fit":"Tiny price, swallows everything. Trust me.",
+    "Mazda3":"Sensible — but you'll actually enjoy driving it.",
+    "Hyundai Elantra":"Most car for the least money, hands down.",
+    "Subaru Impreza":"Rain or mountains, this one's got grip.",
+    "Kia Soul":"Cheap, roomy, easy to live with.",
+    "Toyota RAV4":"Need the space? This is the safe bet.",
+    "Nissan Leaf":"Cheapest way off gas — city life only.",
+    "Chevy Bolt EV":"Honestly? For LA commuting, this is the move.",
+    "Tesla Model 3":"If you've saved up, it's finally affordable used.",
+    "Toyota Corolla Hybrid":"New-ish, sips fuel, outlives us all.",
+    "Mazda CX-30":"Feels pricier than it is. Solid pick.",
+    "Hyundai Kona":"SUV feel without the SUV gas bill.",
+    "Honda CR-V":"The one I'd hand down to my own kid.",
+    "Subaru Outback":"Does everything. You won't outgrow it.",
+    "Lexus UX":"Treat yourself — reliable luxury that sips gas.",
+    "Volvo XC40":"If safety's the priority, start right here.",
+    "Volvo C40 Recharge":"Safe, electric, and a real head-turner.",
+    "Tesla Model Y":"Room for everything, electric, road-trip ready.",
+    "Lexus IS":"Built like a vault. It'll spoil you."
+  };
+  CARS.forEach(c=>{ if(BRO[c.name]) c.blurb=BRO[c.name]; });
+  const byName=n=>CARS.find(c=>c.name===n);
+
+  const ELEC_RATE=0.30, MAINT={gas:65,hybrid:60,ev:35};
+  const $=id=>document.getElementById(id);
+  const fmt=n=>"$"+Math.round(n).toLocaleString();
+
+  const state={budget:15000,miles:12000,gas:4.9,fuelFilter:"all",awdOnly:false,
+    pri:{fuel:true,reliability:true,parking:false,space:false,upfront:false,safety:false},
+    pay:"finance",down:10,apr:9,term:60,age:22, compare:[]};
+
+  function tierLabel(b){
+    if(b<8000) return "tight — older, higher-mileage";
+    if(b<14000) return "used & reliable territory";
+    if(b<22000) return "newer used / used EV range";
+    if(b<32000) return "low-mile used or entry new";
+    if(b<50000) return "premium & luxury EVs in play";
+    return "loaded / near-new luxury";
+  }
+  function insMonthly(car,age){
+    let base= age<20?290:age<25?230:age<30?165:130;
+    const val=(car.lo+car.hi)/2;
+    base+=Math.max(0,(val-12000)/1000)*4;
+    if(car.fuel==="ev") base*=1.12;
+    if(car.type==="SUV") base*=1.05;
+    return Math.round(base);
+  }
+  const regYearly=v=>65+12+0.0065*v+80;
+  function monthlyLoan(price){
+    const p=price*(1-state.down/100), r=state.apr/100/12, n=state.term;
+    return r===0? p/n : p*r/(1-Math.pow(1+r,-n));
+  }
+  function fuelMonthly(car){
+    const m=state.miles/12;
+    return car.fuel==="ev" ? (m/car.miPerKwh)*ELEC_RATE : (m/car.mpg)*state.gas;
+  }
+  function fitScore(car){
+    const value=(car.lo+car.hi)/2;
+    const effic=car.fuel==="ev"?1:Math.min(1,(car.mpg-25)/30+.4);
+    const rel=car.rel/5, park=car.park/5, space=car.space/5, safe=(car.safe||4)/5;
+    const cheap=1-Math.min(1,(value-7000)/30000);
+    let s=effic*0.20+rel*0.16+park*0.15+space*0.09+cheap*0.09+safe*0.08+0.10;
+    if(state.pri.fuel) s+=effic*0.18;
+    if(state.pri.reliability) s+=rel*0.16;
+    if(state.pri.safety) s+=safe*0.18;
+    if(state.pri.parking) s+=park*0.16;
+    if(state.pri.space) s+=space*0.16;
+    if(state.pri.upfront) s+=cheap*0.16;
+    if(state.miles>=18000) s+=effic*0.12;
+    if(state.miles>=18000 && car.range && car.range<170) s-=0.10;
+    return Math.max(0,Math.min(1,s));
+  }
+  function buildCost(car){
+    const value=Math.min(car.hi,Math.max(car.lo,state.budget));
+    const loan=state.pay==="finance"?monthlyLoan(value):0;
+    const fuel=fuelMonthly(car), ins=insMonthly(car,state.age);
+    const reg=regYearly(value)/12, smog=car.fuel==="ev"?0:25/12*2, maint=MAINT[car.fuel];
+    return {value,loan,fuel,ins,reg,smog,maint,total:loan+fuel+ins+reg+smog+maint};
+  }
+  function smogNote(car){
+    if(car.fuel==="ev") return ["ok","Electric — no smog check, ever"];
+    if(car.yrsOld<=8) return ["ok","Likely smog-exempt (8 model yrs or newer)"];
+    return ["warn","Needs a smog check every 2 years"];
+  }
+  const fitColor=p=> p>=72?"var(--mint)" : p>=58?"var(--amber)" : "var(--rose)";
+  const rawColor=p=> p>=72?"#67ffcb" : p>=58?"#ffae4d" : "#ff6f88";
+
+  function gaugeSVG(fit,color){
+    const visible=75, valLen=fit*visible, needleDeg=-135+fit*270;
+    return `<svg viewBox="0 0 120 120" aria-hidden="true">
+      <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(140,170,215,.16)" stroke-width="7" stroke-dasharray="${visible} 100" pathLength="100" transform="rotate(135 60 60)"/>
+      <circle class="val-arc" cx="60" cy="60" r="50" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${valLen} 100" pathLength="100" transform="rotate(135 60 60)" style="filter:drop-shadow(0 0 5px ${color});stroke-dashoffset:${valLen}"/>
+      <g class="needle" style="transform:rotate(${needleDeg}deg)">
+        <line x1="60" y1="60" x2="60" y2="24" stroke="${color}" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="60" cy="60" r="4.5" fill="var(--surface)" stroke="${color}" stroke-width="2"/>
+      </g></svg>`;
+  }
+  function gaugeBlock(fit,sizeN,sizeL){
+    const pct=Math.round(fit*100);
+    return `<div class="gauge">${gaugeSVG(fit,rawColor(pct))}
+      <div class="gauge-num"><span class="n" style="font-size:${sizeN}px;color:${fitColor(pct)}">${pct}</span><span class="l" style="font-size:${sizeL}px">LA FIT</span></div></div>`;
+  }
+  function notesHTML(c){ return [...c.notes,smogNote(c)].map(n=>`<li class="${n[0]}"><span class="ico">${n[0]==="ok"?"✓":"!"}</span><span>${n[1]}</span></li>`).join(""); }
+  function badgesHTML(c){
+    const ftCls=c.fuel==="ev"?"ev":c.fuel==="hybrid"?"hyb":"gas";
+    const ftTxt=c.fuel==="ev"?"EV":c.fuel==="hybrid"?"Hybrid":"Gas";
+    return `<span class="bt">${c.type}</span><span class="bt ${ftCls}">${ftTxt}</span>`+(c.awd?'<span class="bt awd">AWD</span>':'')+(c.safe>=5?'<span class="bt saf">★ Safety</span>':'');
+  }
+  function cmpBtn(c){
+    const on=state.compare.includes(c.name);
+    return `<button class="cmp-btn" data-name="${c.name}" aria-pressed="${on}">${on?"✓ Comparing":"＋ Compare"}</button>`;
+  }
+  function costHTML(c,cost){
+    return `<button class="cost-toggle" aria-expanded="false">
+        <span>Cost telemetry · <span class="mo">${fmt(cost.total)}/mo</span></span><span class="chev">▾</span></button>
+      <div class="cost-panel">
+        ${state.pay==="finance"?`<div class="cl"><span>Loan (${state.down}% dn · ${state.apr}% · ${state.term}mo)</span><span class="amt">${fmt(cost.loan)}</span></div>`:`<div class="cl"><span>Paid in cash</span><span class="amt">$0</span></div>`}
+        <div class="cl"><span>${c.fuel==="ev"?"Charging":"Fuel"} (${Math.round(state.miles/1000)}k mi/yr)</span><span class="amt">${fmt(cost.fuel)}</span></div>
+        <div class="cl"><span>Insurance est. (age ${state.age})</span><span class="amt">${fmt(cost.ins)}</span></div>
+        <div class="cl"><span>CA registration</span><span class="amt">${fmt(cost.reg)}</span></div>
+        <div class="cl"><span>Smog + upkeep</span><span class="amt">${fmt(cost.smog+cost.maint)}</span></div>
+        <div class="cl-total"><span>~ Per month</span><span class="amt">${fmt(cost.total)}</span></div>
+        <div class="cost-foot">Estimates only. Insurance varies most — get real quotes for your ZIP &amp; record.</div>
+      </div>`;
+  }
+  const effRO=c=> c.fuel==="ev"
+    ? `<div class="ro"><div class="k">Range</div><div class="v">${c.range} mi</div></div>`
+    : `<div class="ro"><div class="k">Combined</div><div class="v">${c.mpg} mpg</div></div>`;
+
+  function featuredHTML(c,fit){
+    const cost=buildCost(c);
+    return `<article class="feat">
+      <div class="feat-tag">★ Best match</div>
+      <div class="feat-grid">
+        <div class="feat-id">${gaugeBlock(fit,40,9)}
+          <div class="feat-name">
+            <div class="car-name">${c.name}</div>
+            <div class="bro">“${c.blurb}”<span class="who">— tu hermano</span></div>
+            <div class="badges">${badgesHTML(c)}</div>
+            ${cmpBtn(c)}
+          </div>
+        </div>
+        <div class="feat-detail">
+          <div class="readouts r4">
+            <div class="ro"><div class="k">Price</div><div class="v small">${fmt(c.lo)}+</div></div>
+            ${effRO(c)}
+            <div class="ro"><div class="k">Reliability</div><div class="v">${c.rel}.0</div></div>
+            <div class="ro"><div class="k">Safety</div><div class="v">${c.safe}.0</div></div>
+          </div>
+          <ul class="la-notes">${notesHTML(c)}</ul>
+          ${costHTML(c,cost)}
+        </div>
+      </div></article>`;
+  }
+  function cardHTML(c,fit,idx){
+    const cost=buildCost(c), sel=state.compare.includes(c.name);
+    return `<article class="car${sel?" selected":""}" style="animation-delay:${Math.min(idx*42,520)}ms">
+      <div class="car-top">${gaugeBlock(fit,25,8)}
+        <div class="head-info">
+          <div class="car-name">${c.name}</div>
+          <div class="car-blurb">${c.blurb}</div>
+          <div class="badges">${badgesHTML(c)}</div>
+          ${cmpBtn(c)}
+        </div>
+      </div>
+      <div class="car-body">
+        <div class="readouts">
+          <div class="ro"><div class="k">Price</div><div class="v small">${fmt(c.lo)}+</div></div>
+          ${effRO(c)}
+          <div class="ro"><div class="k">Reliability</div><div class="v">${c.rel}.0</div></div>
+        </div>
+        <ul class="la-notes">${notesHTML(c)}</ul>
+        ${costHTML(c,cost)}
+      </div></article>`;
+  }
+
+  function compareHTML(){
+    if(!state.compare.length) return "";
+    const sel=state.compare.map(n=>{ const c=byName(n); const fit=fitScore(c); return {c,fit,cost:buildCost(c)}; });
+    if(sel.length===1){
+      const A=sel[0];
+      return `<div class="cmp-panel"><div class="cmp-bar"><span class="t">Compare <span class="vs">·</span> 1 of 2</span><button class="cmp-clear">Clear</button></div>
+        <div class="cmp-prompt"><span><b>${A.c.name}</b> pinned. Tap “Compare” on another car to put them head-to-head.</span></div></div>`;
+    }
+    const [A,B]=sel;
+    const eff=(x)=> x.c.fuel==="ev"? x.c.range : x.c.mpg;
+    const sameType=A.c.fuel==="ev" && B.c.fuel==="ev" || (A.c.fuel!=="ev" && B.c.fuel!=="ev");
+    const rows=[
+      {l:"LA Fit", a:Math.round(A.fit*100), b:Math.round(B.fit*100), f:v=>v, dir:1},
+      {l:"Starting price", a:A.c.lo, b:B.c.lo, f:v=>fmt(v), dir:-1},
+      {l:"Est. monthly", a:Math.round(A.cost.total), b:Math.round(B.cost.total), f:v=>fmt(v)+"/mo", dir:-1},
+      {l:"Efficiency", a:eff(A), b:eff(B), f:(v,car)=>car.fuel==="ev"?v+" mi":v+" mpg", dir: sameType?1:0, perCar:true},
+      {l:"Reliability", a:A.c.rel, b:B.c.rel, f:v=>v.toFixed(1)+" / 5", dir:1},
+      {l:"Safety", a:A.c.safe, b:B.c.safe, f:v=>v.toFixed(1)+" / 5", dir:1},
+      {l:"Parking ease", a:A.c.park, b:B.c.park, f:v=>v+" / 5", dir:1},
+      {l:"Drivetrain", a:A.c.awd?"AWD":"2WD", b:B.c.awd?"AWD":"2WD", f:v=>v, dir:0},
+    ];
+    const cells=rows.map(r=>{
+      let wa="",wb="";
+      if(r.dir!==0 && r.a!==r.b){ const aWins=r.dir>0? r.a>r.b : r.a<r.b; if(aWins) wa="win"; else wb="win"; }
+      const fa=r.perCar? r.f(r.a,A.c): r.f(r.a);
+      const fb=r.perCar? r.f(r.b,B.c): r.f(r.b);
+      return `<div class="cmp-cell label">${r.l}</div><div class="cmp-cell val ${wa}">${fa}</div><div class="cmp-cell val ${wb}">${fb}</div>`;
+    }).join("");
+    return `<div class="cmp-panel">
+      <div class="cmp-bar"><span class="t">Head-to-head <span class="vs">vs</span></span><button class="cmp-clear">Clear</button></div>
+      <div class="cmp-grid">
+        <div class="cmp-h"></div>
+        <div class="cmp-h">${gaugeBlock(A.fit,19,7)}<div class="cmp-hname">${A.c.name}</div><div class="badges" style="justify-content:center">${badgesHTML(A.c)}</div></div>
+        <div class="cmp-h">${gaugeBlock(B.fit,19,7)}<div class="cmp-hname">${B.c.name}</div><div class="badges" style="justify-content:center">${badgesHTML(B.c)}</div></div>
+        ${cells}
+      </div></div>`;
+  }
+
+  function sweep(root){ root.querySelectorAll(".val-arc").forEach(arc=>{ requestAnimationFrame(()=>requestAnimationFrame(()=>{ arc.style.strokeDashoffset="0"; })); }); }
+
+  function render(){
+    let pool=CARS.filter(c=>c.lo<=state.budget);
+    if(state.fuelFilter!=="all") pool=pool.filter(c=>c.fuel===state.fuelFilter);
+    if(state.awdOnly) pool=pool.filter(c=>c.awd);
+    const list=pool.map(c=>({c,fit:fitScore(c)})).sort((a,b)=>b.fit-a.fit);
+
+    $("count").textContent=list.length;
+    const cmp=$("compare"), feat=$("featured"), grid=$("grid");
+    cmp.innerHTML=compareHTML();
+
+    if(!list.length){
+      feat.innerHTML="";
+      grid.innerHTML='<div class="empty"><b>No cars match these filters</b>Loosen the powertrain or AWD filter, or raise the budget — first-car staples start around $7,000–$9,000.</div>';
+      sweep(cmp); return;
+    }
+    feat.innerHTML=featuredHTML(list[0].c,list[0].fit);
+    grid.innerHTML=list.slice(1).map((x,i)=>cardHTML(x.c,x.fit,i+1)).join("");
+    sweep($("results"));
+  }
+
+  function tickbar(){
+    const n=14, frac=(state.budget-4000)/(80000-4000), on=Math.round(frac*n);
+    $("tickbar").innerHTML=Array.from({length:n},(_,k)=>`<i class="${k<on?"on":""}"></i>`).join("");
+  }
+
+  // delegated clicks within results (cards re-render each time)
+  $("results").addEventListener("click",e=>{
+    const tog=e.target.closest(".cost-toggle");
+    if(tog){ const p=tog.parentElement.querySelector(".cost-panel"); const o=p.classList.toggle("open"); tog.setAttribute("aria-expanded",o); return; }
+    const cmpClear=e.target.closest(".cmp-clear");
+    if(cmpClear){ state.compare=[]; render(); return; }
+    const cb=e.target.closest(".cmp-btn");
+    if(cb){
+      const n=cb.dataset.name, i=state.compare.indexOf(n);
+      if(i>=0) state.compare.splice(i,1);
+      else { state.compare.push(n); if(state.compare.length>2) state.compare.shift(); }
+      render();
+    }
+  });
+
+  $("budget").addEventListener("input",e=>{
+    state.budget=+e.target.value;
+    $("budgetDisplay").innerHTML='<span class="unit">$</span>'+state.budget.toLocaleString();
+    $("budgetMini").textContent="$"+state.budget.toLocaleString();
+    $("budgetTier").textContent=tierLabel(state.budget);
+    tickbar(); render();
+  });
+  $("gas").addEventListener("input",e=>{ state.gas=+e.target.value; $("gasVal").textContent="$"+state.gas.toFixed(2)+"/gal"; render(); });
+  $("driveSeg").addEventListener("click",e=>{
+    const b=e.target.closest("button"); if(!b)return;
+    [...e.currentTarget.children].forEach(x=>x.setAttribute("aria-pressed","false"));
+    b.setAttribute("aria-pressed","true"); state.miles=+b.dataset.miles;
+    $("milesVal").textContent="~"+Math.round(state.miles/1000)+"k mi/yr"; render();
+  });
+  $("fuelSeg").addEventListener("click",e=>{
+    const b=e.target.closest("button"); if(!b)return;
+    [...e.currentTarget.children].forEach(x=>x.setAttribute("aria-pressed","false"));
+    b.setAttribute("aria-pressed","true"); state.fuelFilter=b.dataset.fuel; render();
+  });
+  $("awdToggle").addEventListener("click",e=>{
+    const on=e.currentTarget.getAttribute("aria-pressed")==="true";
+    e.currentTarget.setAttribute("aria-pressed",String(!on)); state.awdOnly=!on; render();
+  });
+  $("priorityChips").addEventListener("click",e=>{
+    const b=e.target.closest(".chip"); if(!b)return;
+    const on=b.getAttribute("aria-pressed")==="true";
+    b.setAttribute("aria-pressed",String(!on)); state.pri[b.dataset.pri]=!on; render();
+  });
+  $("paySeg").addEventListener("click",e=>{
+    const b=e.target.closest("button"); if(!b)return;
+    [...e.currentTarget.children].forEach(x=>x.setAttribute("aria-pressed","false"));
+    b.setAttribute("aria-pressed","true"); state.pay=b.dataset.pay;
+    $("financeFields").style.opacity=state.pay==="finance"?"1":".4"; render();
+  });
+  ["down","apr","term","age"].forEach(id=>$(id).addEventListener("input",e=>{ state[id]=+e.target.value||0; render(); }));
+
+  tickbar(); render();
+})();
+</script>
+</body>
+</html>
